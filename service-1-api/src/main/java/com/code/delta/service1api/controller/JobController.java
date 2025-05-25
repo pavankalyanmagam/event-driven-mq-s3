@@ -60,4 +60,13 @@ public class JobController {
         CompletableFuture.runAsync(() -> fileService.generateFiles(persistedDto));
         return ResponseEntity.ok().build();
     }
+
+    @PostMapping("/upload-to-s3")
+    public ResponseEntity<Void> uploadToS3(@RequestBody JobPersistedDto persistedDto) {
+        log.info("Received request to process final step for job: {}", persistedDto.jobReqId());
+        // Run async to not block the HTTP thread from Service 3
+        CompletableFuture.runAsync(() ->
+                fileService.generateAndUploadFiles(persistedDto));
+        return ResponseEntity.ok().build();
+    }
 }
