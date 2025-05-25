@@ -27,9 +27,9 @@ services:
       SPRING_CLOUD_AWS_CREDENTIALS_ACCESS-KEY: AKIAT2TQV6VS3D2KGCVQ
       SPRING_CLOUD_AWS_CREDENTIALS_SECRET-KEY: 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
       SPRING_ACTIVEMQ_BROKER-URL: tcp://activemq:61616
-      SPRING_ACTIVEMQ_PACKAGES_TRUST-ALL: true
-      JOB_SUBMISSION_QUEUE: job-submission-requests
-      JOB_PERSISTENCE_QUEUE: job-persistence-notifications
+#      SPRING_ACTIVEMQ_PACKAGES_TRUST-ALL: true
+#      JOB_SUBMISSION_QUEUE: job-submission-requests
+#      JOB_PERSISTENCE_QUEUE: job-persistence-notifications
       LOGGING_LEVEL_ROOT: INFO
       LOGGING_LEVEL_COM_CODE_DELTA: DEBUG
       LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_JMS: DEBUG
@@ -41,14 +41,14 @@ services:
     depends_on:
       - activemq
     environment:
-      JOB_SUBMISSION_QUEUE: job-submission-requests
-      JOB_PERSISTENCE_QUEUE: job-persistence-notifications
       SPRING_DATASOURCE_URL: jdbc:postgresql://ep-rapid-king-a4fc328z-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require
       SPRING_DATASOURCE_USERNAME: neondb_owner
       SPRING_DATASOURCE_PASSWORD: npg_8yvHAKePxoJ4
       SPRING_JPA_DATABASE-PLATFORM: org.hibernate.dialect.PostgreSQLDialect
       SPRING_ACTIVEMQ_BROKER-URL: tcp://activemq:61616
-      SPRING_ACTIVEMQ_PACKAGES_TRUST-ALL: true
+#      SPRING_ACTIVEMQ_PACKAGES_TRUST-ALL: true
+#      JOB_SUBMISSION_QUEUE: job-submission-requests
+#      JOB_PERSISTENCE_QUEUE: job-persistence-notifications
       LOGGING_LEVEL_ROOT: INFO
       LOGGING_LEVEL_COM_CODE_DELTA: DEBUG
       LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_JMS: DEBUG
@@ -66,9 +66,9 @@ services:
       SPRING_DATASOURCE_PASSWORD: npg_8yvHAKePxoJ4
       SPRING_JPA_DATABASE-PLATFORM: org.hibernate.dialect.PostgreSQLDialect
       SPRING_ACTIVEMQ_BROKER-URL: tcp://activemq:61616
-      SPRING_ACTIVEMQ_PACKAGES_TRUST-ALL: true
-      JOB_SUBMISSION_QUEUE: job-submission-requests
-      JOB_PERSISTENCE_QUEUE: job-persistence-notifications
+#      SPRING_ACTIVEMQ_PACKAGES_TRUST-ALL: true
+#      JOB_SUBMISSION_QUEUE: job-submission-requests
+#      JOB_PERSISTENCE_QUEUE: job-persistence-notifications
       LOGGING_LEVEL_ROOT: INFO
       LOGGING_LEVEL_COM_CODE_DELTA: DEBUG
       LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_JMS: DEBUG
