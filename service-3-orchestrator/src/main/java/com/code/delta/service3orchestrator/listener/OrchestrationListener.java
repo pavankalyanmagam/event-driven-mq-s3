@@ -5,6 +5,7 @@ import com.code.delta.service3orchestrator.service.OrchestrationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jms.annotation.JmsListener;
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -22,7 +23,13 @@ public class OrchestrationListener {
      * When a message arrives, this code will execute.
      * @param persistedDto The message payload, automatically converted from JSON to our DTO.
      */
-    @JmsListener(destination = "${job.persistence.queue}")
+//    @JmsListener(destination = "${job.persistence.queue}")
+//    public void receivePersistedJob(JobPersistedDto persistedDto) {
+//        log.info("Received persisted job notification with ID: {}", persistedDto.jobReqId());
+//        orchestrationService.triggerFinalProcessing(persistedDto);
+//    }
+
+    @KafkaListener(topics = "${kafka.topic.persistence}", groupId = "orchestration-group")
     public void receivePersistedJob(JobPersistedDto persistedDto) {
         log.info("Received persisted job notification with ID: {}", persistedDto.jobReqId());
         orchestrationService.triggerFinalProcessing(persistedDto);

@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 //import org.springframework.jms.core.JmsTemplate;
 import org.springframework.jms.core.JmsTemplate;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,14 +29,21 @@ public class PersistenceService {
 //    @Value("${rabbitmq.queue.persistence}")
 //    private String persistenceQueueName;
 
+
+    private final KafkaTemplate<String, Object> kafkaTemplate;
+
+    @Value("${kafka.topic.persistence}") // New property name
+    private String persistenceTopicName;
+
     public PersistenceService(JobRepository jobRepository,
                               //RabbitTemplate rabbitTemplate
-                              JmsTemplate jmsTemplate, @Value("${job.persistence.queue}") String persistenceQueue
+                              JmsTemplate jmsTemplate, @Value("${job.persistence.queue}") String persistenceQueue, KafkaTemplate<String, Object> kafkaTemplate
     ) {
         this.jobRepository = jobRepository;
         //this.rabbitTemplate = rabbitTemplate;
         this.jmsTemplate = jmsTemplate;
         this.persistenceQueue = persistenceQueue;
+        this.kafkaTemplate = kafkaTemplate;
     }
 
     @Transactional
@@ -59,8 +67,11 @@ public class PersistenceService {
             );
 
             // Send to the next queue
-            jmsTemplate.convertAndSend(persistenceQueue, persistedDto);
+           // jmsTemplate.convertAndSend(persistenceQueue, persistedDto);
             //rabbitTemplate.convertAndSend(persistenceQueueName, persistedDto);
+
+            // Send to Kafka: topic, key, payload
+            kafkaTemplate.send(persistenceTopicName, job.getJobReqId().toString(), persistedDto);
 
 
         } catch (Exception e) {

@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 //import org.springframework.jms.core.JmsTemplate;
 import org.springframework.jms.core.JmsTemplate;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -29,10 +30,16 @@ public class JobController {
    private final String submissionQueue;
    // private final RabbitTemplate rabbitTemplate;
 
+    private final KafkaTemplate<String, Object> kafkaTemplate;
+
+    @Value("${kafka.topic.submission}") // New property name
+    private String submissionTopicName;
+
+
     public JobController(
             //JmsTemplate jmsTemplate,
             FileService fileService,
-            @Value("${job.submission.queue}") String submissionQueue, JmsTemplate jmsTemplate
+            @Value("${job.submission.queue}") String submissionQueue, JmsTemplate jmsTemplate, KafkaTemplate<String, Object> kafkaTemplate
             //RabbitTemplate rabbitTemplate
     ) {
         //this.jmsTemplate = jmsTemplate;
@@ -40,15 +47,20 @@ public class JobController {
         this.jmsTemplate = jmsTemplate;
         this.submissionQueue = submissionQueue;
         //this.rabbitTemplate = rabbitTemplate;
+        this.kafkaTemplate = kafkaTemplate;
     }
 
     @PostMapping
     public ResponseEntity<String> submitJob(@RequestBody JobSubmissionDto submissionDto) {
         try {
             log.info("Received job submission: {}", submissionDto.jobName());
-            jmsTemplate.convertAndSend(submissionQueue, submissionDto);
+           // jmsTemplate.convertAndSend(submissionQueue, submissionDto);
             // 3. Use the injected field here
             //rabbitTemplate.convertAndSend(submissionQueueName, submissionDto);
+
+            // Send to Kafka: topic, key (can be null or a specific ID), payload
+            kafkaTemplate.send(submissionTopicName, submissionDto);
+
             return ResponseEntity.accepted().body("{\"message\": \"Job accepted for processing.\"}");
         } catch (Exception e) {
             log.error("Failed to send job to queue", e);
