@@ -19,6 +19,7 @@
         <module>service-1-api</module>
         <module>service-2-persistence</module>
         <module>service-3-orchestrator</module>
+        <module>service-4-lambda-uploader</module>
     </modules>
 
     <properties>
