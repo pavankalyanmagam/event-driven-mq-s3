@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Job Submitter</title>
+    <style>
+        body { font-family: sans-serif; max-width: 600px; margin: 2em auto; padding: 1em; line-height: 1.6; }
+        input, textarea { width: 100%; padding: 8px; margin-bottom: 1em; box-sizing: border-box; }
+        button { padding: 10px 15px; background-color: #007bff; color: white; border: none; cursor: pointer; }
+        #response { margin-top: 1em; padding: 1em; background-color: #f0f0f0; border: 1px solid #ccc; }
+    </style>
+</head>
+<body>
+<h1>Submit a New Job</h1>
+<form id="jobForm">
+    <label for="jobName">Job Name:</label>
+    <input type="text" id="jobName" name="jobName" required>
+
+    <label for="payload">Payload (JSON):</label>
+    <textarea id="payload" name="payload" rows="5" required>{"key1": "value1", "someNumber": 123}</textarea>
+
+    <button type="submit">Submit Job</button>
+</form>
+
+<h2>Response</h2>
+<pre id="response"></pre>
+
+<script>
+    document.getElementById('jobForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const jobName = document.getElementById('jobName').value;
+        const payloadText = document.getElementById('payload').value;
+        const responseElement = document.getElementById('response');
+
+        let payload;
+        try {
+            payload = JSON.parse(payloadText);
+        } catch (error) {
+            responseElement.textContent = 'Error: Invalid JSON in payload.';
+            return;
+        }
+
+        const data = {
+            jobName: jobName,
+            payload: payload
+        };
+
+        responseElement.textContent = 'Submitting...';
+
+        try {
+            const response = await fetch('/api/jobs', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+            responseElement.textContent = `Status: ${response.status}\n\n${JSON.stringify(result, null, 2)}`;
+
+        } catch (error) {
+            responseElement.textContent = `Network Error: ${error.message}`;
+        }
+    });
+</script>
+</body>
+</html>
