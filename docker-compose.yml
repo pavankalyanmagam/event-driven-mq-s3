@@ -1,0 +1,116 @@
+version: '3.8'
+
+services:
+  activemq:
+    image: symptoma/activemq:latest # A popular and well-maintained image for ActiveMQ Classic
+    ports:
+      - "61616:61616" # The main broker port for your apps to connect
+      - "8161:8161"   # The port for the web management UI
+    environment:
+      # You can set the default credentials for the web UI
+      - ACTIVEMQ_ADMIN_LOGIN=admin
+      - ACTIVEMQ_ADMIN_PASSWORD=admin
+
+  rabbitmq:
+    image: rabbitmq:3.13-management # Use the official image with the management UI
+    ports:
+      - "5672:5672"   # Port for your application to connect
+      - "15672:15672" # Port for the web management UI
+    environment:
+      # Default user and password for the local broker
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASSWORD=guest
+
+  service-1-api:
+    build:
+      context: .
+      dockerfile: ./service-1-api/Dockerfile
+    ports:
+      - "8080:8080" # Map host port 8080 to container port 8080
+    depends_on: # Add this to make sure RabbitMQ starts first
+      - rabbitmq
+      - activemq
+    environment:
+      # This tells Service 1 where to find Service 3 (via the Docker network)
+      # Note: We will define service-3-orchestrator's environment variables below
+#      SERVICE1_API_URL: http://service-3-orchestrator:8080/api/jobs/upload-to-s3
+      # --- Common Environment Variables ---
+      # --- Updated RabbitMQ URI to point to the local container ---
+      SPRING_RABBITMQ_URI: amqp://guest:guest@rabbitmq:5672/
+      # ... other environment variables remain the same ...
+      RABBITMQ_QUEUE_SUBMISSION: job-submission-requests
+      RABBITMQ_QUEUE_PERSISTENCE: job-persistence-notifications
+      SPRING_DATASOURCE_URL: jdbc:postgresql://ep-rapid-king-a4fc328z-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require
+      SPRING_DATASOURCE_USERNAME: neondb_owner
+      SPRING_DATASOURCE_PASSWORD: npg_8yvHAKePxoJ4
+      SPRING_JPA_DATABASE-PLATFORM: org.hibernate.dialect.PostgreSQLDialect
+      AWS_S3_BUCKET-NAME: delta-tc-upload-data
+      SPRING_CLOUD_AWS_REGION_STATIC: us-east-1
+      SPRING_CLOUD_AWS_CREDENTIALS_ACCESS-KEY: AKIAT2TQV6VS3D2KGCVQ
+      SPRING_CLOUD_AWS_CREDENTIALS_SECRET-KEY: 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
+      SPRING_ACTIVEMQ_BROKER-URL: tcp://activemq:61616
+      SPRING_ACTIVEMQ_PACKAGES_TRUST-ALL: true
+      JOB_SUBMISSION_QUEUE: job-submission-requests
+      JOB_PERSISTENCE_QUEUE: job-persistence-notifications
+      LOGGING_LEVEL_ROOT: INFO
+      LOGGING_LEVEL_COM_CODE_DELTA: DEBUG
+      LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_JMS: DEBUG
+      LOGGING_LEVEL_ORG_APACHE_ACTIVEMQ: DEBUG
+  service-2-persistence:
+    build:
+      context: .
+      dockerfile: ./service-2-persistence/Dockerfile
+    depends_on: # Add this
+      - rabbitmq
+      - activemq
+    environment:
+      # --- Common Environment Variables ---
+      SPRING_RABBITMQ_URI: amqp://guest:guest@rabbitmq:5672/
+      # ... other environment variables remain the same ...
+      RABBITMQ_QUEUE_SUBMISSION: job-submission-requests
+      RABBITMQ_QUEUE_PERSISTENCE: job-persistence-notifications
+      JOB_SUBMISSION_QUEUE: job-submission-requests
+      JOB_PERSISTENCE_QUEUE: job-persistence-notifications
+      SPRING_DATASOURCE_URL: jdbc:postgresql://ep-rapid-king-a4fc328z-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require
+      SPRING_DATASOURCE_USERNAME: neondb_owner
+      SPRING_DATASOURCE_PASSWORD: npg_8yvHAKePxoJ4
+      SPRING_JPA_DATABASE-PLATFORM: org.hibernate.dialect.PostgreSQLDialect
+      SPRING_ACTIVEMQ_BROKER-URL: tcp://activemq:61616
+      SPRING_ACTIVEMQ_PACKAGES_TRUST-ALL: true
+      SPRING_AMQP_RABBITMQ_LISTENER_SIMPLE_RETRY_ENABLED: true
+      SPRING_AMQP_RABBITMQ_LISTENER_SIMPLE_RETRY_MAX-ATTEMPTS: 10
+      SPRING_AMQP_RABBITMQ_LISTENER_SIMPLE_RETRY_INITIAL-INTERVAL: 5000 # 5 seconds
+      SPRING_AMQP_RABBITMQ_TEMPLATE_RETRY_ENABLED: true
+      SPRING_AMQP_RABBITMQ_TEMPLATE_RETRY_MAX-ATTEMPTS: 10
+      SPRING_AMQP_RABBITMQ_TEMPLATE_RETRY_INITIAL-INTERVAL: 5000 # 5 seconds
+      LOGGING_LEVEL_ROOT: INFO
+      LOGGING_LEVEL_COM_CODE_DELTA: DEBUG
+      LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_JMS: DEBUG
+      LOGGING_LEVEL_ORG_APACHE_ACTIVEMQ: DEBUG
+  service-3-orchestrator:
+    build:
+      context: .
+      dockerfile: ./service-3-orchestrator/Dockerfile
+    depends_on: # Add this
+        - rabbitmq
+        - activemq
+    environment:
+      # This tells Service 3 where to find Service 1 (via the Docker network)
+      SERVICE1_API_URL: http://service-1-api:8080/api/jobs/upload-to-s3
+      # --- Common Environment Variables ---
+      SPRING_RABBITMQ_URI: amqp://guest:guest@rabbitmq:5672/
+      # ... other environment variables remain the same ...
+      RABBITMQ_QUEUE_SUBMISSION: job-submission-requests
+      RABBITMQ_QUEUE_PERSISTENCE: job-persistence-notifications
+      SPRING_DATASOURCE_URL: jdbc:postgresql://ep-rapid-king-a4fc328z-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require
+      SPRING_DATASOURCE_USERNAME: neondb_owner
+      SPRING_DATASOURCE_PASSWORD: npg_8yvHAKePxoJ4
+      SPRING_JPA_DATABASE-PLATFORM: org.hibernate.dialect.PostgreSQLDialect
+      SPRING_ACTIVEMQ_BROKER-URL: tcp://activemq:61616
+      SPRING_ACTIVEMQ_PACKAGES_TRUST-ALL: true
+      JOB_SUBMISSION_QUEUE: job-submission-requests
+      JOB_PERSISTENCE_QUEUE: job-persistence-notifications
+      LOGGING_LEVEL_ROOT: INFO
+      LOGGING_LEVEL_COM_CODE_DELTA: DEBUG
+      LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_JMS: DEBUG
+      LOGGING_LEVEL_ORG_APACHE_ACTIVEMQ: DEBUG

@@ -7,9 +7,10 @@ import com.code.delta.commondata.entity.Job;
 import com.code.delta.service2persistence.repository.JobRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
+//import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 //import org.springframework.jms.core.JmsTemplate;
+import org.springframework.jms.core.JmsTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,20 +21,21 @@ public class PersistenceService {
     private static final Logger log = LoggerFactory.getLogger(PersistenceService.class);
 
     private final JobRepository jobRepository;
-//    private final JmsTemplate jmsTemplate;
-    //private final String persistenceQueue;
-    private final RabbitTemplate rabbitTemplate;
+   private final JmsTemplate jmsTemplate;
+    private final String persistenceQueue;
+    //private final RabbitTemplate rabbitTemplate;
     // 1. Inject the persistence queue name
-    @Value("${rabbitmq.queue.persistence}")
-    private String persistenceQueueName;
+//    @Value("${rabbitmq.queue.persistence}")
+//    private String persistenceQueueName;
 
-    public PersistenceService(JobRepository jobRepository, RabbitTemplate rabbitTemplate
-//                              JmsTemplate jmsTemplate, @Value("${job.persistence.queue}") String persistenceQueue
+    public PersistenceService(JobRepository jobRepository,
+                              //RabbitTemplate rabbitTemplate
+                              JmsTemplate jmsTemplate, @Value("${job.persistence.queue}") String persistenceQueue
     ) {
         this.jobRepository = jobRepository;
-        this.rabbitTemplate = rabbitTemplate;
-//        this.jmsTemplate = jmsTemplate;
-        //this.persistenceQueue = persistenceQueue;
+        //this.rabbitTemplate = rabbitTemplate;
+        this.jmsTemplate = jmsTemplate;
+        this.persistenceQueue = persistenceQueue;
     }
 
     @Transactional
@@ -57,8 +59,8 @@ public class PersistenceService {
             );
 
             // Send to the next queue
-            //jmsTemplate.convertAndSend(persistenceQueue, persistedDto);
-            rabbitTemplate.convertAndSend(persistenceQueueName, persistedDto);
+            jmsTemplate.convertAndSend(persistenceQueue, persistedDto);
+            //rabbitTemplate.convertAndSend(persistenceQueueName, persistedDto);
 
 
         } catch (Exception e) {
